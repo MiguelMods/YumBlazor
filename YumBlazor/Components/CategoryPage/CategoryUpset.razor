@@ -1,0 +1,135 @@
+﻿@page "/category/create"
+@page "/category/update/{Id:long}"
+@using YumBlazor.Data.Entitys
+@inject NavigationManager NavigationManager
+
+<PageTitle>Category - @Title</PageTitle>
+
+<h3>@Title</h3>
+<hr />
+
+@if (IsProcessing)
+{
+    @((MarkupString)ProcessingHTML)
+}
+else
+{
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body p-4">
+                    <EditForm Model="Model" FormName="CategoryUpsetForm" OnValidSubmit="FormValidation">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <div class="border p-3 mt-4">
+                            <div class="form-floating py-3 col-12">
+                                <InputText @bind-Value="Model.Name" class="form-control" id="Name" placeholder="Name" />
+                                <label for="Name" class="form-label">Name</label>
+                                <ValidationMessage For="@(() => Model.Name)" class="text-danger" />
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-6 col-md-6">
+                                <button type="submit" class="btn btn-primary" disabled="@IsProcessing">
+                                    <i class="bi bi-save"></i> Save
+                                </button>
+                            </div>
+                            <div class="col-6 col-md-6">
+                                <button type="button" class="btn btn-danger" disabled="@IsProcessing" @onclick="GoBackToIndex">
+                                    <i class="bi bi-save"></i> Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public long? Id { get; set; } = null;
+    private string Title { get; set; } = "Create - New Category";
+    private bool IsProcessing { get; set; } = false;
+    private string ProcessingHTML { get; set; } = string.Empty;
+
+    [SupplyParameterFromForm]
+    private Category Model { get; set; } = new();
+
+    private ICategoryRepository? Repository;
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsProcessing = true;
+        ProcessingHTML = ProcessingOnInitializationHTML();
+        Repository = CategoryRepository;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (Id.HasValue)
+            {
+                Model = await Repository.GetByIdAsync(Id.GetValueOrDefault()) ?? new();
+
+                if (Model == null || Model.Id == 0)
+                {
+                    var messages = $"Category with Id {Id} not found.";
+                    NavigationManager.NavigateTo($"/category/{messages}");
+                    return;
+                }
+
+                Title = $"Update - {Model?.Name} Category";
+            }
+
+            IsProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task FormValidation()
+    {
+        IsProcessing = true;
+
+        ProcessingHTML = @"
+            <div class='position-absolute w-75 h-75 flex-column align-items-center bg-white'>
+                <div class='spinner-border position-absolute flex-column align-items-center bg-white' role='status'>
+                    <span class='visually-hidden'>Processing...</span>
+                </div>
+            </div>";
+
+        if (Model.Id > 0)
+        {
+            var result = await Repository.UpdateAsync(Model);
+            Model = result ?? new Category();
+            var success = Model.Id > 0;
+            NavigationManager.NavigateTo($"/category/{success}");
+        }
+        else
+        {
+            var result = await Repository.AddAsync(Model);
+            Model = result ?? new Category();
+            var success = Model.Id > 0;
+            NavigationManager.NavigateTo($"/category/{success}");
+        }
+
+        NavigationManager.NavigateTo($"/category/{ProcessingHTML}");
+    }
+
+    private void GoBackToIndex()
+    {
+        NavigationManager.NavigateTo("/category");
+    }
+
+    private string ProcessingOnInitializationHTML()
+    {
+        return @"
+            <div class='position-absolute w-75 h-75 flex-column align-items-center bg-white'>
+                <div class='spinner-border position-absolute flex-column align-items-center bg-white' role='status'>
+                    <span class='visually-hidden'>Loading...</span>
+                </div>
+            </div>";
+    }
+}
