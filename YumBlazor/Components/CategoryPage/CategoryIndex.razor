@@ -5,20 +5,10 @@
 
 @if (IsProcessing)
 {
-    <div class="position-absolute w-75 h-75 flex-column align-items-center bg-white">
-        <div class="spinner-border position-absolute flex-column align-items-center bg-white" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-    </div>
+    <LoadingComponent />
 }
 else
 {
-
-    @if(!string.IsNullOrEmpty(Message))
-    {
-        if(Success){}else{}
-    }
-
     <div class="card shadow border-1 border-light mt-4 border-radius-15">
         <div class="card-header bg-primary bg-gradient m-lg-0 py-1 bg-opacity-75 text-center border-radius-15" style="font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif">
             <div class="row">
@@ -72,16 +62,17 @@ else
     [Parameter]
     public string? Message { get; set; } = null;
     [Parameter]
-    public bool Success{ get; set; }
+    public bool Success { get; set; }
 
     public bool IsProcessing { get; set; } = false;
     private IEnumerable<Category> Categories { get; set; } = null!;
     private ICategoryRepository Repository { get; set; } = null!;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         IsProcessing = true;
         Repository = CategoryRepository;
+        await JSRun.ToastrWarning("Load Page");
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -91,6 +82,7 @@ else
             Categories = await Repository.GetAllAsync();
             IsProcessing = false;
             StateHasChanged();
+            await JSRun.ToastrSuccess("Page Loaded Successfully");
         }
     }
 }

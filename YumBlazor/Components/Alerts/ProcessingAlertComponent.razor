@@ -1,0 +1,10 @@
+﻿<div class="@CssClass text-center">
+    <h3>@Message</h3>
+</div>
+
+@code {
+    [Parameter]
+    public string CssClass { get; set; } = "alert alert-info";
+    [Parameter]
+    public string Message { get; set; } = "Processing...";
+}
