@@ -26,3 +26,13 @@
             toastr.info(messge);
     }
 }
+function ShowModal(modalId)
+{
+    let modal = document.getElementById(modalId);
+    bootstrap.Modal.getOrCreateInstance(modal).show();
+}
+function HideModal(modalId)
+{
+    let modal = document.getElementById(modalId);
+    bootstrap.Modal.getOrCreateInstance(modal).hide();
+}

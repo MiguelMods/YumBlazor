@@ -68,13 +68,15 @@ else
     {
         IsProcessing = true;
         Repository = CategoryRepository;
-        await JSRun.ToastrWarning("Loading Category Page...");
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            await JSRun.ToastrWarning("Loading Category Page...");
+            await Task.Delay(1000);
+
             if (Id.HasValue)
             {
                 await JSRun.ToastrInfo($"Loading Category with Id {Id}...");

@@ -18,6 +18,12 @@ namespace YumBlazor.Services.Extensions
 
         public static async Task Toastr(this IJSRuntime runtime, string type, string message) 
             => await runtime.InvokeVoidAsync("showToastr", type, message);
+
+        public static async Task ShowModal(this IJSRuntime jSRuntime, string modalId) 
+            => await jSRuntime.InvokeVoidAsync("ShowModal", modalId);
+
+        public static async Task HideModal(this IJSRuntime jSRuntime, string modalId)
+            => await jSRuntime.InvokeVoidAsync("HideModal", modalId);
     }
 
     public static class ToastrConstants
