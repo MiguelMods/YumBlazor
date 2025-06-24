@@ -73,7 +73,7 @@ else
     public bool IsProcessingDelete { get; set; } = false;
     public long DeleteId { get; set; }
     private IEnumerable<Category> Categories { get; set; } = null!;
-    private ICategoryRepository Repository { get; set; } = null!;
+    private IProductRepository Repository { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
