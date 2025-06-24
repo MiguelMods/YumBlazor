@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using YumBlazor.Data;
-using YumBlazor.Data.Entitys;
+using YumBlazor.Data.Entities;
 using YumBlazor.Repository.IRepository;
 
 namespace YumBlazor.Repository

@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace YumBlazor.Data.Entitys
+namespace YumBlazor.Data.Entities
 {
     [Table("Categories")]
     public class Category

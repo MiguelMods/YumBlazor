@@ -1,4 +1,4 @@
-﻿using YumBlazor.Data.Entitys;
+﻿using YumBlazor.Data.Entities;
 
 namespace YumBlazor.Repository.IRepository
 {

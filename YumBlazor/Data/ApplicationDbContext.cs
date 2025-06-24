@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using YumBlazor.Data.Entitys;
+using YumBlazor.Data.Entities;
 
 namespace YumBlazor.Data
 {
