@@ -1,0 +1,229 @@
+﻿@page "/Product/create"
+@page "/Product/update/{Id:long}"
+@using YumBlazor.Data.Entities
+@inject IWebHostEnvironment Environment
+@inject NavigationManager NavigationManager
+
+<PageTitle>Product - @Title</PageTitle>
+
+<h3>@Title</h3>
+<hr />
+
+@if (IsProcessing)
+{
+    <ProcessingAlertComponent />
+}
+else
+{
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body p-4">
+                    <EditForm Model="Model" FormName="ProductUpsetForm" OnValidSubmit="FormValidation">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <div class="border p-3 mt-4">
+                            <div class="form-floating py-3 col-12">
+                                <InputText @bind-Value="Model.Name" class="form-control" id="Name" placeholder="Name" disabled="@IsSavingForm" />
+                                <label for="Name">Name</label>
+                                <ValidationMessage For="@(() => Model.Name)" class="text-danger" />
+                            </div>
+                            <div class="form-floating py-3 col-12">
+                                <InputNumber @bind-Value="Model.Price" class="form-control" id="Price" placeholder="Price" disabled="@IsSavingForm" />
+                                <label for="Price">Price</label>
+                                <ValidationMessage For="@(() => Model.Price)" class="text-danger" />
+                            </div>
+                            <div class="form-floating py-3 col-12">
+                                <InputTextArea @bind-Value="Model.Description" class="form-control" id="Description" placeholder="Description" disabled="@IsSavingForm" />
+                                <label for="Description">Description</label>
+                                <ValidationMessage For="@(() => Model.Description)" class="text-danger" />
+                            </div>
+                            <div class="form-floating py-3 col-12">
+                                <InputText @bind-Value="Model.SpecialTag" class="form-control" id="SpecialTag" placeholder="SpecialTag" disabled="@IsSavingForm" />
+                                <label for="SpecialTag">SpecialTag</label>
+                                <ValidationMessage For="@(() => Model.SpecialTag)" class="text-danger" />
+                            </div>
+                            <div class="form-floating py-3 col-12">
+                                <InputSelect @bind-Value="Model.CategoryId" class="form-select" id="CategoryId">
+                                    <option value="0" disabled selected>--Select a Category--</option>
+                                    @if (Categories != null && Categories.Any())
+                                    {
+                                        @foreach (var category in Categories.OrderBy(x => x.Name))
+                                        {
+                                            <option value="@category.Id">@category.Name</option>
+                                        }
+                                    }
+                                </InputSelect>
+                                <label for="CategoryId">CategoryId</label>
+                                <ValidationMessage For="@(() => Model.CategoryId)" class="text-danger" />
+                            </div>
+                            <div class="form-floating py-3 col-12">
+                                @if (string.IsNullOrEmpty(Model.ImageUrl))
+                                {
+                                    <InputFile OnChange="LoadFile" class="form-control" id="loadImageFile" accept="image/x-png,image/jpeg" disabled="@IsSavingForm" />
+                                    <label for="ImageUrl">ImageUrl</label>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                                {
+                                    <div class="row">
+                                        <div class="col-3">
+                                            <img src="@Model.ImageUrl" alt="Product Image" class="img-thumbnail" style="max-width: 100px; max-height: 100px;" />
+                                        </div>
+                                        <div class="col-9">
+                                            <i class="bi bi-trash btn btn-outline-danger" @onclick="DeleteImage">Remove</i>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-6 col-md-3">
+                                    <button type="submit" class="btn btn-primary form-control" disabled="@IsSavingForm">
+                                        <i class="bi bi-save"></i> Save
+                                    </button>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <button type="button" class="btn btn-danger form-control" disabled="@IsSavingForm" @onclick="GoBackToIndex">
+                                        <i class="bi bi-arrow-bar-left"></i> Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </EditForm>
+                </div>
+                @if (IsSavingForm)
+                {
+                    <ProcessingAlertComponent CssClass="alert alert-info" Message="@Message" />
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public long? Id { get; set; } = null;
+    private string Title { get; set; } = "Create - New Product";
+    private bool IsProcessing { get; set; } = false;
+    private bool IsSavingForm { get; set; } = false;
+    private bool IsLoadingImage { get; set; } = false;
+    private string? DirectoryRoot { get; set; }
+    private string Message { get; set; } = string.Empty;
+
+    [SupplyParameterFromForm]
+    private Product Model { get; set; } = new();
+
+    private IProductRepository? Repository;
+
+    private IEnumerable<Category> Categories { get; set; }
+
+    protected override void OnInitialized()
+    {
+        IsProcessing = true;
+        Repository = ProductRepository;
+        DirectoryRoot = Path.Combine(Environment.WebRootPath, "images", "Products");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRun.ToastrWarning("Loading Product Page...");
+            await Task.Delay(1000);
+
+            if (Id.HasValue)
+            {
+                await JSRun.ToastrInfo($"Loading Product with Id {Id}...");
+                Model = await Repository.GetByIdAsync(Id.GetValueOrDefault()) ?? new();
+
+                if (Model == null || Model.Id == 0)
+                {
+                    var messages = $"Product with Id {Id} not found.";
+                    NavigationManager.NavigateTo($"/Product/{messages}");
+                    return;
+                }
+                Title = $"Update - {Model?.Name} Product";
+            }
+
+            Categories = await CategoryRepository.GetAllAsync();
+
+            IsProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task FormValidation()
+    {
+        IsSavingForm = true;
+        bool success = false;
+        Product? result;
+
+        if (Model.Id > 0)
+        {
+            Message = $"Updating Product with Id {Model.Id} - {Model.Name}";
+            await JSRun.ToastrInfo(Message);
+            await Task.Delay(1000);
+            result = await Repository.UpdateAsync(Model);
+        }
+        else
+        {
+            Message = $"Creating a new Product - {Model.Name}";
+            await JSRun.ToastrInfo(Message);
+            await Task.Delay(1000);
+            result = await Repository.AddAsync(Model);
+        }
+
+        Model = result ?? new Product();
+        success = Model.Id > 0;
+        Message += success ? $", was successfully" : " was a error";
+
+        if (success)
+        {
+            await JSRun.ToastrSuccess(Message);
+        }
+        else
+        {
+            await JSRun.ToastrError(Message);
+        }
+
+        await Task.Delay(1000);
+
+        NavigationManager.NavigateTo($"/Product");
+    }
+
+    private void GoBackToIndex()
+    {
+        NavigationManager.NavigateTo("/Product");
+    }
+
+    private async Task LoadFile(InputFileChangeEventArgs args)
+    {
+        IsProcessing = true;
+        var file = args.File;
+        FileInfo fileInfo = new(file.Name);
+        var newFileName = $"{Guid.NewGuid()}{fileInfo.Extension}";
+
+        if (!Directory.Exists(DirectoryRoot))
+            Directory.CreateDirectory(DirectoryRoot!);
+
+        var filePath = Path.Combine(DirectoryRoot!, newFileName);
+        await using FileStream fs = new(filePath, FileMode.Create);
+        await file.OpenReadStream(file.Size).CopyToAsync(fs);
+
+        Model.ImageUrl = filePath.Replace("\\", "/");
+        IsProcessing = false;
+    }
+
+    private void DeleteImage()
+    {
+        if (string.IsNullOrEmpty(Model.ImageUrl))
+            return;
+
+        var filePath = Path.Combine(DirectoryRoot!, Model.ImageUrl.TrimStart('/')).Replace("\\","/");
+
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+            Model.ImageUrl = null;
+        }
+    }
+}

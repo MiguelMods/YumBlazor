@@ -62,7 +62,7 @@ else
     [SupplyParameterFromForm]
     private Category Model { get; set; } = new();
 
-    private IProductRepository? Repository;
+    private ICategoryRepository? Repository;
 
     protected override async Task OnInitializedAsync()
     {
